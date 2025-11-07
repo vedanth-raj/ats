@@ -1,18 +1,48 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../models/nominee.dart';
+import 'dart:async';
 
 class FirebaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
 
-  // Authentication methods
-  Future<ConfirmationResult> signInWithPhone(String phoneNumber) async {
-    return await _auth.signInWithPhoneNumber(phoneNumber);
+  String? _verificationId;
+  int? _resendToken;
+
+  // Authentication methods for mobile platforms
+  Future<void> signInWithPhone(
+    String phoneNumber, {
+    required Function(String verificationId) onCodeSent,
+    required Function(String error) onError,
+  }) async {
+    await _auth.verifyPhoneNumber(
+      phoneNumber: phoneNumber,
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        // Auto-retrieval or instant verification
+        await _auth.signInWithCredential(credential);
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        onError(e.message ?? 'Verification failed');
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        _verificationId = verificationId;
+        _resendToken = resendToken;
+        onCodeSent(verificationId);
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        _verificationId = verificationId;
+      },
+      timeout: const Duration(seconds: 60),
+    );
   }
 
-  Future<UserCredential> verifyOTP(ConfirmationResult confirmationResult, String smsCode) async {
-    return await confirmationResult.confirm(smsCode);
+  Future<UserCredential> verifyOTP(String verificationId, String smsCode) async {
+    PhoneAuthCredential credential = PhoneAuthProvider.credential(
+      verificationId: verificationId,
+      smsCode: smsCode,
+    );
+    return await _auth.signInWithCredential(credential);
   }
 
   User? get currentUser => _auth.currentUser;
