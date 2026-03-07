@@ -1,41 +1,32 @@
 <?php
 session_start();
+require_once 'config/json-database.php';
 
-// Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
-    header('Location: index.php');
+    header('Location: index-fast.php');
     exit();
 }
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    require_once 'config/database.php';
-    
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
     
     if (!empty($username) && !empty($password)) {
-        $conn = getDBConnection();
+        $db = new JsonDB();
+        $users = $db->query('users');
         
-        $stmt = $conn->prepare("SELECT auto_id, username FROM users WHERE username = ? AND password = ?");
-        $stmt->bind_param("ss", $username, $password);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        if ($result->num_rows == 1) {
-            $user = $result->fetch_assoc();
-            $_SESSION['user_id'] = $user['auto_id'];
-            $_SESSION['username'] = $user['username'];
-            
-            header('Location: index.php');
-            exit();
-        } else {
-            $error = 'Invalid username or password';
+        foreach ($users as $user) {
+            if ($user['username'] === $username && $user['password'] === $password) {
+                $_SESSION['user_id'] = $user['auto_id'];
+                $_SESSION['username'] = $user['username'];
+                header('Location: index-fast.php');
+                exit();
+            }
         }
         
-        $stmt->close();
-        closeDBConnection($conn);
+        $error = 'Invalid username or password';
     } else {
         $error = 'Please enter both username and password';
     }
@@ -48,13 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Management Auto Attendance System</title>
     <link rel="stylesheet" href="assets/css/style.css">
-
 </head>
 <body class="login-page">
     <div class="login-container">
         <div class="login-box">
             <div class="login-header">
-                <h1>Management Auto Attendance System</h1>
+                <h1>🚀 Management Auto Attendance System</h1>
                 <p>Please login to continue</p>
             </div>
             
@@ -82,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             <div class="login-footer">
                 <p class="text-muted">Default credentials: admin / kuna123</p>
+                <p style="margin-top: 0.5rem; color: #27ae60;">⚡ Fast Mode - JSON Database (No MySQL)</p>
             </div>
         </div>
     </div>
