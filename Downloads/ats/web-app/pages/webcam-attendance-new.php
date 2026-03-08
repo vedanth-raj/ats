@@ -154,11 +154,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
     
     <!-- Load our controllers -->
-    <script src="../assets/js/utils.js"></script>
-    <script src="../assets/js/webcam-controller.js"></script>
-    <script src="../assets/js/face-detection-controller.js"></script>
-    <script src="../assets/js/face-recognition-controller.js"></script>
-    <script src="../assets/js/attendance-controller.js"></script>
+    <script src="../assets/js/utils.js?v=2"></script>
+    <script src="../assets/js/webcam-controller.js?v=2"></script>
+    <script src="../assets/js/face-detection-controller.js?v=2"></script>
+    <script src="../assets/js/face-recognition-controller.js?v=2"></script>
+    <script src="../assets/js/attendance-controller.js?v=2"></script>
     
     <script>
         // Initialize controllers

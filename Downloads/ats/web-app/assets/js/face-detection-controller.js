@@ -4,7 +4,7 @@
  */
 
 class FaceDetectionController {
-    constructor(modelPath = '/attendance-system/models/face-api') {
+    constructor(modelPath = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model') {
         this.modelPath = modelPath;
         this.modelsLoaded = false;
         this.detectionInterval = null;
