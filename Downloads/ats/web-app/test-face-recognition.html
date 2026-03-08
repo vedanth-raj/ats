@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Face Recognition System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+        }
+        
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        .model-info {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Face Recognition System Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test API Endpoints</h2>
+        <button onclick="testGetModels()">Test Get Models API</button>
+        <button onclick="testGetAttendance()">Test Get Attendance API</button>
+        <button onclick="testCheckDuplicate()">Test Check Duplicate API</button>
+        <div id="api-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Test Controllers</h2>
+        <button onclick="testWebcamController()">Test Webcam Controller</button>
+        <button onclick="testFaceRecognitionController()">Test Face Recognition Controller</button>
+        <button onclick="testAttendanceController()">Test Attendance Controller</button>
+        <div id="controller-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Loaded Models</h2>
+        <div id="models-info">Loading...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. System Status</h2>
+        <div id="system-status">
+            <div class="status info">Initializing...</div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Quick Actions</h2>
+        <button onclick="window.location.href='pages/webcam-attendance-new.php'">Open Attendance Page</button>
+        <button onclick="markTestAttendance()">Mark Test Attendance (0001)</button>
+        <button onclick="viewAttendanceRecords()">View Today's Attendance</button>
+    </div>
+    
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/webcam-controller.js"></script>
+    <script src="assets/js/face-recognition-controller.js"></script>
+    <script src="assets/js/attendance-controller.js"></script>
+    
+    <script>
+        // Test Get Models API
+        async function testGetModels() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<div class="status info">Testing Get Models API...</div>';
+            
+            try {
+                const response = await fetch('/attendance-system/api/get-models.php');
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultsDiv.innerHTML = `
+                        <div class="status success">
+                            ✓ Get Models API Working<br>
+                            Found ${result.count} models
+                        </div>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="status error">✗ API Error: ${result.message}</div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="status error">✗ Network Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Test Get Attendance API
+        async function testGetAttendance() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<div class="status info">Testing Get Attendance API...</div>';
+            
+            try {
+                const response = await fetch('/attendance-system/api/get-attendance.php?type=today');
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultsDiv.innerHTML = `
+                        <div class="status success">
+                            ✓ Get Attendance API Working<br>
+                            Found ${result.count} records today
+                        </div>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="status error">✗ API Error: ${result.message}</div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="status error">✗ Network Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Test Check Duplicate API
+        async function testCheckDuplicate() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<div class="status info">Testing Check Duplicate API...</div>';
+            
+            try {
+                const response = await fetch('/attendance-system/api/check-duplicate.php?employee_id=0001');
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultsDiv.innerHTML = `
+                        <div class="status success">
+                            ✓ Check Duplicate API Working<br>
+                            Duplicate for 0001: ${result.duplicate ? 'Yes' : 'No'}
+                        </div>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="status error">✗ API Error: ${result.message}</div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="status error">✗ Network Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Test Webcam Controller
+        function testWebcamController() {
+            const resultsDiv = document.getElementById('controller-results');
+            
+            try {
+                const video = document.createElement('video');
+                const controller = new WebcamController(video);
+                
+                resultsDiv.innerHTML = `
+                    <div class="status success">
+                        ✓ WebcamController loaded successfully<br>
+                        Methods available: startCamera, stopCamera, captureFrame, isActive
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="status error">✗ Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Test Face Recognition Controller
+        async function testFaceRecognitionController() {
+            const resultsDiv = document.getElementById('controller-results');
+            resultsDiv.innerHTML = '<div class="status info">Testing Face Recognition Controller...</div>';
+            
+            try {
+                const controller = new FaceRecognitionController(0.6);
+                const count = await controller.loadEmployeeModels();
+                
+                resultsDiv.innerHTML = `
+                    <div class="status success">
+                        ✓ FaceRecognitionController working<br>
+                        Loaded ${count} employee models<br>
+                        Threshold: ${controller.getThreshold()}<br>
+                        Employees: ${controller.getLoadedEmployees().join(', ')}
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="status error">✗ Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Test Attendance Controller
+        function testAttendanceController() {
+            const resultsDiv = document.getElementById('controller-results');
+            
+            try {
+                const controller = new AttendanceController();
+                
+                resultsDiv.innerHTML = `
+                    <div class="status success">
+                        ✓ AttendanceController loaded successfully<br>
+                        Methods available: markAttendance, checkDuplicate, getTodayAttendance
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="status error">✗ Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Mark test attendance
+        async function markTestAttendance() {
+            try {
+                const formData = new FormData();
+                formData.append('employee_id', '0001');
+                
+                const response = await fetch('/attendance-system/api/process-attendance.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displaySuccess(result.message);
+                    viewAttendanceRecords();
+                } else {
+                    displayError(result.message);
+                }
+            } catch (error) {
+                displayError('Error: ' + error.message);
+            }
+        }
+        
+        // View attendance records
+        async function viewAttendanceRecords() {
+            try {
+                const response = await fetch('/attendance-system/api/get-attendance.php?type=today');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const html = `
+                        <h3>Today's Attendance (${result.count} records)</h3>
+                        <pre>${JSON.stringify(result.records, null, 2)}</pre>
+                    `;
+                    document.getElementById('system-status').innerHTML = html;
+                }
+            } catch (error) {
+                displayError('Error: ' + error.message);
+            }
+        }
+        
+        // Load models info on page load
+        async function loadModelsInfo() {
+            try {
+                const response = await fetch('/attendance-system/api/get-models.php');
+                const result = await response.json();
+                
+                if (result.success && result.models.length > 0) {
+                    let html = '';
+                    result.models.forEach(model => {
+                        html += `
+                            <div class="model-info">
+                                <strong>${model.employee_name}</strong><br>
+                                ID: ${model.employee_id}<br>
+                                Trained: ${model.training_date}<br>
+                                Path: ${model.path}
+                            </div>
+                        `;
+                    });
+                    document.getElementById('models-info').innerHTML = html;
+                    
+                    document.getElementById('system-status').innerHTML = `
+                        <div class="status success">
+                            ✓ System Ready<br>
+                            ${result.count} employee models loaded<br>
+                            Face recognition is operational
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('models-info').innerHTML = `
+                        <div class="status error">No models found</div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('models-info').innerHTML = `
+                    <div class="status error">Error loading models: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Initialize on page load
+        loadModelsInfo();
+    </script>
+</body>
+</html>

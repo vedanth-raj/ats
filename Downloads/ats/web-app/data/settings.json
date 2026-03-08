@@ -1,0 +1,15 @@
+[
+    {
+        "auto_id": 1,
+        "working_hours_start": "09:00:00",
+        "working_hours_end": "17:00:00",
+        "late_arrival_threshold_minutes": 15,
+        "face_recognition_confidence_threshold": 0.75,
+        "dataset_image_count": 50,
+        "dataset_capture_interval_ms": 200,
+        "session_timeout_hours": 8,
+        "face_detection_fps": 10,
+        "image_width": 160,
+        "image_height": 160
+    }
+]
