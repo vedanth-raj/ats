@@ -289,7 +289,7 @@
                 </div>
                 <div id="systemHealth" class="loading">Loading...</div>
                 <div style="margin-top: 15px;">
-                    <button class="btn" onclick="loadLogs()">View Logs</button>
+                    <button class="btn" onclick="viewAllLogs()">View All Logs</button>
                     <button class="btn danger" onclick="clearLogs()">Clear Logs</button>
                 </div>
             </div>
@@ -435,14 +435,215 @@
                 
                 if (result.success && result.logs.length > 0) {
                     document.getElementById('systemLogs').innerHTML = result.logs.map(log => 
-                        `<div class="log-entry">${log}</div>`
+                        `<div class="log-entry">${escapeHtml(log)}</div>`
                     ).join('');
                 } else {
-                    document.getElementById('systemLogs').innerHTML = '<div class="loading">No recent logs</div>';
+                    document.getElementById('systemLogs').innerHTML = '<div class="loading">No recent error logs found</div>';
                 }
             } catch (error) {
-                document.getElementById('systemLogs').innerHTML = '<div class="error">Error loading logs</div>';
+                document.getElementById('systemLogs').innerHTML = '<div class="error">Error loading logs: ' + error.message + '</div>';
             }
+        }
+
+        async function viewAllLogs() {
+            // Create a modal to show different types of logs
+            showLogsModal();
+        }
+
+        async function showLogsModal() {
+            try {
+                // Fetch different types of logs
+                const logTypes = ['errors', 'access', 'security', 'health', 'alerts'];
+                const logPromises = logTypes.map(async (type) => {
+                    try {
+                        const response = await fetch(`/api/admin/logs?type=${type}&limit=50`, {
+                            headers: {
+                                'Authorization': 'Bearer admin-token'
+                            }
+                        });
+                        const result = await response.json();
+                        return {
+                            type: type,
+                            logs: result.success ? result.logs : [],
+                            total: result.total || 0
+                        };
+                    } catch (error) {
+                        return {
+                            type: type,
+                            logs: [`Error loading ${type} logs: ${error.message}`],
+                            total: 0
+                        };
+                    }
+                });
+
+                const allLogs = await Promise.all(logPromises);
+                createLogsModal(allLogs);
+            } catch (error) {
+                alert('Error loading logs: ' + error.message);
+            }
+        }
+
+        function createLogsModal(allLogs) {
+            // Remove existing modal if any
+            const existingModal = document.getElementById('logsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Create modal HTML
+            const modalHTML = `
+                <div id="logsModal" style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                ">
+                    <div style="
+                        background: white;
+                        border-radius: 15px;
+                        padding: 30px;
+                        max-width: 90%;
+                        width: 1000px;
+                        max-height: 90%;
+                        overflow-y: auto;
+                        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h2 style="color: #333; margin: 0;">System Logs</h2>
+                            <button onclick="closeLogsModal()" style="
+                                background: #dc3545;
+                                color: white;
+                                border: none;
+                                border-radius: 50%;
+                                width: 30px;
+                                height: 30px;
+                                cursor: pointer;
+                                font-size: 16px;
+                            ">×</button>
+                        </div>
+                        
+                        <!-- Log Type Tabs -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #e1e5e9;">
+                            ${allLogs.map((logData, index) => `
+                                <button onclick="showLogType('${logData.type}')" 
+                                        id="tab-${logData.type}"
+                                        class="log-tab ${index === 0 ? 'active' : ''}"
+                                        style="
+                                            padding: 10px 15px;
+                                            border: none;
+                                            background: ${index === 0 ? '#667eea' : 'transparent'};
+                                            color: ${index === 0 ? 'white' : '#666'};
+                                            border-radius: 5px 5px 0 0;
+                                            cursor: pointer;
+                                            text-transform: capitalize;
+                                            font-weight: 500;
+                                        ">
+                                    ${logData.type} (${logData.total})
+                                </button>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- Log Content -->
+                        <div id="logContent" style="
+                            max-height: 400px;
+                            overflow-y: auto;
+                            background: #f8f9fa;
+                            border-radius: 8px;
+                            padding: 15px;
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
+                        ">
+                            ${allLogs.map((logData, index) => `
+                                <div id="logs-${logData.type}" class="log-content" style="display: ${index === 0 ? 'block' : 'none'};">
+                                    ${logData.logs.length > 0 ? 
+                                        logData.logs.map(log => `<div class="log-entry" style="padding: 5px 0; border-bottom: 1px solid #e9ecef;">${escapeHtml(log)}</div>`).join('') :
+                                        `<div style="text-align: center; color: #666; padding: 20px;">No ${logData.type} logs found</div>`
+                                    }
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                            <button onclick="refreshLogs()" style="
+                                background: #28a745;
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: 500;
+                            ">Refresh Logs</button>
+                            <button onclick="downloadLogs()" style="
+                                background: #17a2b8;
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: 500;
+                            ">Download All Logs</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function showLogType(type) {
+            // Hide all log contents
+            document.querySelectorAll('.log-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.log-tab').forEach(tab => {
+                tab.style.background = 'transparent';
+                tab.style.color = '#666';
+            });
+            
+            // Show selected log content
+            const selectedContent = document.getElementById(`logs-${type}`);
+            if (selectedContent) {
+                selectedContent.style.display = 'block';
+            }
+            
+            // Activate selected tab
+            const selectedTab = document.getElementById(`tab-${type}`);
+            if (selectedTab) {
+                selectedTab.style.background = '#667eea';
+                selectedTab.style.color = 'white';
+            }
+        }
+
+        function closeLogsModal() {
+            const modal = document.getElementById('logsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function refreshLogs() {
+            closeLogsModal();
+            showLogsModal();
+        }
+
+        function downloadLogs() {
+            // Create a downloadable file with all logs
+            window.open('/api/admin/logs/download', '_blank');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function loadEmployees() {
@@ -640,12 +841,18 @@
             if (modal && event.target === modal) {
                 closeEmployeeModal();
             }
+            
+            const logsModal = document.getElementById('logsModal');
+            if (logsModal && event.target === logsModal) {
+                closeLogsModal();
+            }
         });
 
         // Close modal with Escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeEmployeeModal();
+                closeLogsModal();
             }
         });
 

@@ -236,6 +236,15 @@
                     <!-- Camera Button -->
                     <div style="text-align: center; margin-top: 10px;">
                         <button type="button" class="btn secondary" onclick="startCamera()" id="startCameraBtn" style="width: auto;">📷 Use Camera</button>
+                        <div id="cameraAlternatives" style="display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
+                            <p style="color: #856404; font-weight: 500; margin-bottom: 10px;">📱 Camera Not Available?</p>
+                            <p style="color: #856404; font-size: 14px; margin-bottom: 10px;">Try these alternatives:</p>
+                            <ul style="color: #856404; font-size: 14px; text-align: left; margin-left: 20px;">
+                                <li>Use <strong>http://localhost:3000</strong> instead of the IP address</li>
+                                <li>Take photos with your phone camera and upload them using the file selector above</li>
+                                <li>Use a different browser (Chrome/Firefox recommended)</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 
@@ -260,16 +269,59 @@
         let capturedPhotos = [];
         let stream = null;
 
-        // Camera functionality
+        // Camera functionality with enhanced error handling
         async function startCamera() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                // Check if getUserMedia is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Camera API not supported in this browser or context');
+                }
+
+                // Check if we're on HTTPS or localhost
+                const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                
+                if (!isSecureContext) {
+                    throw new Error('Camera access requires HTTPS when not on localhost. Please use localhost:3000 or enable HTTPS.');
+                }
+
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    } 
+                });
+                
                 const video = document.getElementById('video');
                 video.srcObject = stream;
                 document.getElementById('cameraSection').style.display = 'block';
                 document.getElementById('startCameraBtn').style.display = 'none';
+                
+                showMessage('Camera started successfully!', 'success');
             } catch (error) {
-                showMessage('Camera access denied or not available: ' + error.message, 'error');
+                console.error('Camera error:', error);
+                
+                let errorMessage = 'Camera access failed: ';
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMessage += 'Permission denied. Please allow camera access and try again.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage += 'No camera found. Please connect a camera and try again.';
+                } else if (error.name === 'NotSupportedError') {
+                    errorMessage += 'Camera not supported in this browser.';
+                } else if (error.message.includes('HTTPS')) {
+                    errorMessage = `🔒 HTTPS Required: Camera access requires a secure connection when not on localhost. 
+                    
+                    Solutions:
+                    1. Use http://localhost:3000 instead of the IP address
+                    2. Or use the file upload option below
+                    3. Or ask admin to enable HTTPS`;
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showMessage(errorMessage, 'error');
+                showCameraAlternatives();
             }
         }
 
@@ -304,6 +356,10 @@
             updatePhotoPreview();
             updateFileText();
         });
+
+        function showCameraAlternatives() {
+            document.getElementById('cameraAlternatives').style.display = 'block';
+        }
 
         function updateFileText() {
             const totalPhotos = capturedPhotos.length;

@@ -1,9 +1,10 @@
 const express = require('express');
-const cors = require('cors');
+const https = require('https');
+const fs = require('fs');
 const path = require('path');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const multer = require('multer');
-const fs = require('fs');
 const http = require('http');
 const socketIo = require('socket.io');
 const helmet = require('helmet');
@@ -23,22 +24,16 @@ const errorHandler = require('./services/error-handler');
 require('dotenv').config();
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server, {
-    cors: {
-        origin: [
-            "http://localhost:3000", 
-            "http://127.0.0.1:3000",
-            "http://10.180.133.44:3000",
-            "http://192.168.56.1:3000"
-        ],
-        methods: ["GET", "POST"],
-        credentials: true
-    }
-});
 
 const PORT = process.env.PORT || 3000;
+const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
 const HOST = process.env.HOST || '0.0.0.0';
+
+// HTTPS Configuration
+const httpsOptions = {
+    key: fs.readFileSync(path.join(__dirname, 'certificates', 'server.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'certificates', 'server.crt'))
+};
 
 // Security middleware
 app.use(helmet({
@@ -63,9 +58,18 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
-// CORS configuration
+// CORS configuration for HTTPS
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://10.180.133.44:3000', 'http://192.168.56.1:3000'],
+    origin: [
+        'http://localhost:3000', 
+        'http://127.0.0.1:3000',
+        'http://10.180.133.44:3000',
+        'http://192.168.56.1:3000',
+        'https://localhost:3443',
+        'https://127.0.0.1:3443',
+        'https://10.180.133.44:3443',
+        'https://192.168.56.1:3443'
+    ],
     credentials: true
 }));
 
@@ -128,6 +132,23 @@ app.get('/api/system/health', (req, res) => systemMonitor.healthCheck(req, res))
 const adminRoutes = require('./routes/admin');
 app.use('/api/admin', adminRoutes);
 
+// Create HTTPS server
+const httpsServer = https.createServer(httpsOptions, app);
+
+// Socket.io for HTTPS
+const io = socketIo(httpsServer, {
+    cors: {
+        origin: [
+            "https://localhost:3443", 
+            "https://127.0.0.1:3443",
+            "https://10.180.133.44:3443",
+            "https://192.168.56.1:3443"
+        ],
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
@@ -151,13 +172,16 @@ io.on('connection', (socket) => {
 app.use(errorHandler.notFound);
 app.use(errorHandler.errorHandler);
 
-// Start server
-server.listen(PORT, HOST, () => {
-    console.log(`Server running on ${HOST}:${PORT}`);
-    console.log(`Local access: http://localhost:${PORT}`);
-    console.log(`Network access: http://10.180.133.44:${PORT}`);
-    console.log(`Network access: http://192.168.56.1:${PORT}`);
-    console.log('Server is accessible from other devices on your network!');
+// Start HTTPS server
+httpsServer.listen(HTTPS_PORT, HOST, () => {
+    console.log(`🔒 HTTPS Server running on ${HOST}:${HTTPS_PORT}`);
+    console.log(`🌐 Local HTTPS access: https://localhost:${HTTPS_PORT}`);
+    console.log(`🌐 Network HTTPS access: https://10.180.133.44:${HTTPS_PORT}`);
+    console.log(`🌐 Network HTTPS access: https://192.168.56.1:${HTTPS_PORT}`);
+    console.log('');
+    console.log('📷 Camera access now available on all devices!');
+    console.log('⚠️  Browser will show security warning for self-signed certificate.');
+    console.log('   Click "Advanced" -> "Proceed to localhost" to continue.');
 });
 
-module.exports = app;
+module.exports = httpsServer;

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Access Test - UAS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+            font-weight: 500;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online {
+            background: #28a745;
+        }
+        .device-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌐 Network Access Test</h1>
+        <p>Testing UAS connectivity from your device</p>
+    </div>
+
+    <div class="test-card">
+        <h3><span class="status-indicator status-online"></span>Connection Status</h3>
+        <p class="success">✅ Successfully connected to UAS server!</p>
+        <p>If you can see this page, your device can access the UAS system over the network.</p>
+    </div>
+
+    <div class="test-card">
+        <h3>📱 Device Information</h3>
+        <div class="device-info">
+            <div><strong>Current URL:</strong> <span id="currentUrl"></span></div>
+            <div><strong>User Agent:</strong> <span id="userAgent"></span></div>
+            <div><strong>Screen Size:</strong> <span id="screenSize"></span></div>
+            <div><strong>Connection Time:</strong> <span id="connectionTime"></span></div>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>🔗 Available Network URLs</h3>
+        <p>Try these URLs from other devices on your network:</p>
+        <div style="margin: 15px 0;">
+            <div class="info">📱 <strong>Primary Network:</strong> http://10.180.133.44:3000</div>
+            <div class="info">💻 <strong>Alternative:</strong> http://192.168.56.1:3000</div>
+            <div class="info">🏠 <strong>Local Only:</strong> http://localhost:3000</div>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>🧪 API Test</h3>
+        <p>Test if the API endpoints are working:</p>
+        <button class="btn" onclick="testAPI()">Test API Connection</button>
+        <div id="apiResult" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>🚀 Quick Actions</h3>
+        <a href="/" class="btn">🏠 Go to Homepage</a>
+        <a href="/employee-registration.html" class="btn">👤 Register Employee</a>
+        <a href="/attendance.html" class="btn">📅 Mark Attendance</a>
+        <a href="/admin/" class="btn">⚙️ Admin Dashboard</a>
+    </div>
+
+    <script>
+        // Display device information
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        document.getElementById('screenSize').textContent = `${screen.width}x${screen.height}`;
+        document.getElementById('connectionTime').textContent = new Date().toLocaleString();
+
+        async function testAPI() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = '<div style="color: #ffc107;">🔄 Testing API endpoints...</div>';
+            
+            const tests = [
+                { name: 'System Health', url: '/api/system/health' },
+                { name: 'Employee List', url: '/api/employees' },
+                { name: 'Face Recognition Status', url: '/api/face/status' }
+            ];
+            
+            let results = [];
+            
+            for (const test of tests) {
+                try {
+                    const response = await fetch(test.url);
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        results.push(`✅ ${test.name}: Working`);
+                    } else {
+                        results.push(`⚠️ ${test.name}: ${response.status} ${response.statusText}`);
+                    }
+                } catch (error) {
+                    results.push(`❌ ${test.name}: ${error.message}`);
+                }
+            }
+            
+            resultDiv.innerHTML = `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-family: monospace;">
+                    ${results.join('<br>')}
+                </div>
+            `;
+        }
+
+        // Auto-test API on page load
+        setTimeout(testAPI, 1000);
+    </script>
+</body>
+</html>

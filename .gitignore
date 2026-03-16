@@ -96,3 +96,16 @@ datasets/
 # Temporary files
 *.tmp
 *.temp
+# Uploads and user data
+uploads/
+data/employees/employees.json
+
+# Certificates and keys (security)
+certificates/
+*.pem
+*.key
+*.crt
+*.pfx
+
+# Test files
+test-logs.html

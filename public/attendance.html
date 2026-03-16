@@ -311,6 +311,15 @@
                 <!-- Start Camera Button -->
                 <div style="text-align: center; padding: 20px;">
                     <button type="button" class="btn" onclick="startAttendanceCamera()" id="startAttendanceCameraBtn">📷 Start Face Recognition</button>
+                    <div id="attendanceAlternatives" style="display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
+                        <p style="color: #856404; font-weight: 500; margin-bottom: 10px;">📱 Camera Not Available?</p>
+                        <p style="color: #856404; font-size: 14px; margin-bottom: 10px;">Try these alternatives:</p>
+                        <ul style="color: #856404; font-size: 14px; text-align: left; margin-left: 20px;">
+                            <li>Use <strong>http://localhost:3000</strong> instead of the IP address</li>
+                            <li>Switch to <strong>Manual Entry</strong> method above</li>
+                            <li>Use a different browser (Chrome/Firefox recommended)</li>
+                        </ul>
+                    </div>
                 </div>
                 
                 <!-- Face Recognition Result -->
@@ -379,16 +388,59 @@
             }
         }
 
-        // Face Recognition Camera Functions
+        // Face Recognition Camera Functions with enhanced error handling
         async function startAttendanceCamera() {
             try {
-                attendanceStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                // Check if getUserMedia is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Camera API not supported in this browser or context');
+                }
+
+                // Check if we're on HTTPS or localhost
+                const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                
+                if (!isSecureContext) {
+                    throw new Error('Camera access requires HTTPS when not on localhost. Please use localhost:3000 or switch to manual entry.');
+                }
+
+                attendanceStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    } 
+                });
+                
                 const video = document.getElementById('attendanceVideo');
                 video.srcObject = attendanceStream;
                 document.getElementById('attendanceCameraSection').style.display = 'block';
                 document.getElementById('startAttendanceCameraBtn').style.display = 'none';
+                
+                showMessage('Camera started successfully!', 'success');
             } catch (error) {
-                showMessage('Camera access denied or not available: ' + error.message, 'error');
+                console.error('Camera error:', error);
+                
+                let errorMessage = 'Camera access failed: ';
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMessage += 'Permission denied. Please allow camera access and try again.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage += 'No camera found. Please connect a camera and try again.';
+                } else if (error.name === 'NotSupportedError') {
+                    errorMessage += 'Camera not supported in this browser.';
+                } else if (error.message.includes('HTTPS')) {
+                    errorMessage = `🔒 HTTPS Required: Camera access requires a secure connection when not on localhost. 
+                    
+                    Solutions:
+                    1. Use http://localhost:3000 instead of the IP address
+                    2. Or use Manual Entry method instead
+                    3. Or ask admin to enable HTTPS`;
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showMessage(errorMessage, 'error');
+                showAttendanceAlternatives();
             }
         }
 
@@ -452,6 +504,10 @@
                     document.getElementById('attendanceCaptureBtn').textContent = '📷 Capture & Verify';
                 }
             }, 'image/jpeg', 0.8);
+        }
+
+        function showAttendanceAlternatives() {
+            document.getElementById('attendanceAlternatives').style.display = 'block';
         }
 
         async function markFaceAttendance(type) {

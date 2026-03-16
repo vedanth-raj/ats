@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test - UAS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+            font-weight: 500;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            border: 2px solid #e1e5e9;
+        }
+        .camera-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📷 Camera Test</h1>
+        <p>Test camera functionality for UAS</p>
+    </div>
+
+    <div class="test-card">
+        <h3>🔍 System Information</h3>
+        <div class="info">
+            <div><strong>Current URL:</strong> <span id="currentUrl"></span></div>
+            <div><strong>Protocol:</strong> <span id="protocol"></span></div>
+            <div><strong>Hostname:</strong> <span id="hostname"></span></div>
+            <div><strong>User Agent:</strong> <span id="userAgent"></span></div>
+            <div><strong>Secure Context:</strong> <span id="secureContext"></span></div>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>🧪 Camera API Tests</h3>
+        
+        <div id="apiStatus" class="status warning">
+            <strong>Testing camera API availability...</strong>
+        </div>
+
+        <div id="permissionStatus" class="status warning" style="display: none;">
+            <strong>Checking camera permissions...</strong>
+        </div>
+
+        <div class="camera-container">
+            <video id="testVideo" autoplay playsinline style="display: none;"></video>
+        </div>
+
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="btn" onclick="testCamera()" id="testBtn">🧪 Test Camera Access</button>
+            <button class="btn" onclick="stopCamera()" id="stopBtn" style="display: none;">⏹️ Stop Camera</button>
+        </div>
+
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>💡 Recommendations</h3>
+        <div id="recommendations">
+            <p>Run the camera test to get personalized recommendations.</p>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>🔗 Quick Links</h3>
+        <a href="/" class="btn">🏠 Homepage</a>
+        <a href="/employee-registration.html" class="btn">👤 Employee Registration</a>
+        <a href="/attendance.html" class="btn">📅 Attendance</a>
+        <a href="/network-test.html" class="btn">🌐 Network Test</a>
+    </div>
+
+    <script>
+        let stream = null;
+
+        // Display system information
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('protocol').textContent = window.location.protocol;
+        document.getElementById('hostname').textContent = window.location.hostname;
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        document.getElementById('secureContext').textContent = window.isSecureContext ? 'Yes' : 'No';
+
+        // Initial API check
+        checkCameraAPI();
+
+        function checkCameraAPI() {
+            const apiStatus = document.getElementById('apiStatus');
+            
+            if (!navigator.mediaDevices) {
+                apiStatus.className = 'status error';
+                apiStatus.innerHTML = '❌ <strong>MediaDevices API not supported</strong><br>Your browser does not support camera access.';
+                showRecommendations('unsupported');
+                return;
+            }
+
+            if (!navigator.mediaDevices.getUserMedia) {
+                apiStatus.className = 'status error';
+                apiStatus.innerHTML = '❌ <strong>getUserMedia not supported</strong><br>Your browser version does not support camera access.';
+                showRecommendations('unsupported');
+                return;
+            }
+
+            // Check secure context
+            const isSecure = window.isSecureContext || 
+                           location.protocol === 'https:' || 
+                           location.hostname === 'localhost' || 
+                           location.hostname === '127.0.0.1';
+
+            if (!isSecure) {
+                apiStatus.className = 'status error';
+                apiStatus.innerHTML = '🔒 <strong>HTTPS Required</strong><br>Camera access requires HTTPS when not on localhost.';
+                showRecommendations('https');
+                return;
+            }
+
+            apiStatus.className = 'status success';
+            apiStatus.innerHTML = '✅ <strong>Camera API Available</strong><br>Your browser supports camera access in this context.';
+            showRecommendations('ready');
+        }
+
+        async function testCamera() {
+            const testBtn = document.getElementById('testBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const permissionStatus = document.getElementById('permissionStatus');
+            const testResults = document.getElementById('testResults');
+            const video = document.getElementById('testVideo');
+
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 Testing...';
+            permissionStatus.style.display = 'block';
+            permissionStatus.className = 'status warning';
+            permissionStatus.innerHTML = '⏳ <strong>Requesting camera permission...</strong><br>Please allow camera access when prompted.';
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    } 
+                });
+
+                video.srcObject = stream;
+                video.style.display = 'block';
+                
+                permissionStatus.className = 'status success';
+                permissionStatus.innerHTML = '✅ <strong>Camera Access Granted</strong><br>Camera is working correctly!';
+
+                testResults.innerHTML = `
+                    <div class="status success">
+                        <strong>🎉 Camera Test Successful!</strong><br>
+                        Your camera is working and ready for use in UAS.
+                    </div>
+                `;
+
+                testBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-block';
+                
+                showRecommendations('success');
+
+            } catch (error) {
+                console.error('Camera test error:', error);
+                
+                let errorMessage = '';
+                let recommendation = '';
+
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = '❌ <strong>Permission Denied</strong><br>Camera access was blocked by user or browser settings.';
+                    recommendation = 'permission';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage = '❌ <strong>No Camera Found</strong><br>No camera device detected on this system.';
+                    recommendation = 'hardware';
+                } else if (error.name === 'NotSupportedError') {
+                    errorMessage = '❌ <strong>Camera Not Supported</strong><br>Camera is not supported in this browser or context.';
+                    recommendation = 'unsupported';
+                } else if (error.name === 'OverconstrainedError') {
+                    errorMessage = '❌ <strong>Camera Constraints Error</strong><br>Requested camera settings are not available.';
+                    recommendation = 'constraints';
+                } else {
+                    errorMessage = `❌ <strong>Camera Error</strong><br>${error.message}`;
+                    recommendation = 'generic';
+                }
+
+                permissionStatus.className = 'status error';
+                permissionStatus.innerHTML = errorMessage;
+
+                testResults.innerHTML = `
+                    <div class="status error">
+                        <strong>Camera Test Failed</strong><br>
+                        Error: ${error.name || 'Unknown'}<br>
+                        Message: ${error.message}
+                    </div>
+                `;
+
+                showRecommendations(recommendation);
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🧪 Test Camera Access';
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            const video = document.getElementById('testVideo');
+            video.style.display = 'none';
+            video.srcObject = null;
+            
+            document.getElementById('testBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').style.display = 'none';
+            
+            document.getElementById('permissionStatus').innerHTML = '⏹️ <strong>Camera Stopped</strong><br>Camera access has been released.';
+        }
+
+        function showRecommendations(type) {
+            const recommendations = document.getElementById('recommendations');
+            
+            switch (type) {
+                case 'ready':
+                    recommendations.innerHTML = `
+                        <div class="status success">
+                            <strong>✅ Ready to Test</strong><br>
+                            Click "Test Camera Access" to verify camera functionality.
+                        </div>
+                    `;
+                    break;
+                    
+                case 'success':
+                    recommendations.innerHTML = `
+                        <div class="status success">
+                            <strong>🎉 All Good!</strong><br>
+                            Your camera is working perfectly. You can now use:
+                            <ul style="margin-top: 10px;">
+                                <li>Employee registration with camera</li>
+                                <li>Face recognition attendance</li>
+                                <li>All camera features in UAS</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'https':
+                    recommendations.innerHTML = `
+                        <div class="status warning">
+                            <strong>🔒 HTTPS Required</strong><br>
+                            <strong>Solutions:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li><strong>Option 1:</strong> Use <code>http://localhost:3000</code> instead</li>
+                                <li><strong>Option 2:</strong> Set up HTTPS with <code>node setup_https.js</code></li>
+                                <li><strong>Option 3:</strong> Use file upload instead of camera</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'permission':
+                    recommendations.innerHTML = `
+                        <div class="status warning">
+                            <strong>🔐 Permission Issue</strong><br>
+                            <strong>Solutions:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li>Click the camera icon in your address bar</li>
+                                <li>Select "Allow" for camera access</li>
+                                <li>Refresh the page and try again</li>
+                                <li>Check browser settings for camera permissions</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'hardware':
+                    recommendations.innerHTML = `
+                        <div class="status error">
+                            <strong>📷 Hardware Issue</strong><br>
+                            <strong>Solutions:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li>Connect a camera to your device</li>
+                                <li>Check if camera works in other apps</li>
+                                <li>Use file upload instead of live camera</li>
+                                <li>Try on a device with a built-in camera</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'unsupported':
+                    recommendations.innerHTML = `
+                        <div class="status error">
+                            <strong>🌐 Browser Issue</strong><br>
+                            <strong>Solutions:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li>Use Chrome or Firefox (recommended)</li>
+                                <li>Update your browser to the latest version</li>
+                                <li>Use file upload instead of camera</li>
+                                <li>Try on a different device</li>
+                            </ul>
+                        </div>
+                    `;
+                    break;
+                    
+                default:
+                    recommendations.innerHTML = `
+                        <div class="status warning">
+                            <strong>🔧 General Troubleshooting</strong><br>
+                            <strong>Try these steps:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li>Use Chrome or Firefox browser</li>
+                                <li>Access via <code>http://localhost:3000</code></li>
+                                <li>Allow camera permissions when prompted</li>
+                                <li>Use file upload as alternative</li>
+                            </ul>
+                        </div>
+                    `;
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', stopCamera);
+    </script>
+</body>
+</html>

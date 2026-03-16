@@ -206,4 +206,38 @@ router.post('/backup', authenticateAdmin, (req, res) => {
     }
 });
 
+// Download all logs
+router.get('/logs/download', authenticateAdmin, (req, res) => {
+    try {
+        const logsDir = path.join(__dirname, '..', 'logs');
+        const logTypes = ['errors', 'access', 'security', 'health', 'alerts'];
+        
+        let allLogsContent = `System Logs Export - ${new Date().toISOString()}\n`;
+        allLogsContent += '='.repeat(60) + '\n\n';
+
+        logTypes.forEach(type => {
+            const logFile = path.join(logsDir, `${type}.log`);
+            allLogsContent += `\n${type.toUpperCase()} LOGS:\n`;
+            allLogsContent += '-'.repeat(30) + '\n';
+            
+            if (fs.existsSync(logFile)) {
+                const content = fs.readFileSync(logFile, 'utf8');
+                allLogsContent += content || 'No logs found\n';
+            } else {
+                allLogsContent += 'Log file not found\n';
+            }
+            allLogsContent += '\n';
+        });
+
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', `attachment; filename="system-logs-${new Date().toISOString().split('T')[0]}.txt"`);
+        res.send(allLogsContent);
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: 'Failed to download logs'
+        });
+    }
+});
+
 module.exports = router;
