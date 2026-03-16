@@ -60,16 +60,17 @@ class EmployeeService {
 
     createEmployee(req, res) {
         try {
-            const { id, name, email, department } = req.body;
+            const { employeeId, id, name, email, department } = req.body;
+            const actualId = employeeId || id; // Support both field names
             
-            if (!id || !name) {
+            if (!actualId || !name) {
                 return res.status(400).json({
                     success: false,
                     error: 'Employee ID and name are required'
                 });
             }
 
-            if (this.employees.has(id)) {
+            if (this.employees.has(actualId)) {
                 return res.status(409).json({
                     success: false,
                     error: 'Employee with this ID already exists'
@@ -77,7 +78,7 @@ class EmployeeService {
             }
 
             const employee = {
-                id,
+                id: actualId,
                 name,
                 email: email || '',
                 department: department || '',
@@ -85,7 +86,7 @@ class EmployeeService {
                 imagePath: req.file ? req.file.path : null
             };
 
-            this.employees.set(id, employee);
+            this.employees.set(actualId, employee);
             this.saveEmployees();
 
             res.status(201).json({
@@ -100,6 +101,7 @@ class EmployeeService {
                 }
             });
         } catch (error) {
+            console.error('Error creating employee:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to create employee'
@@ -177,4 +179,11 @@ class EmployeeService {
     }
 }
 
-module.exports = new EmployeeService();
+const employeeService = new EmployeeService();
+
+module.exports = {
+    getAllEmployees: (req, res) => employeeService.getAllEmployees(req, res),
+    createEmployee: (req, res) => employeeService.createEmployee(req, res),
+    updateEmployee: (req, res) => employeeService.updateEmployee(req, res),
+    deleteEmployee: (req, res) => employeeService.deleteEmployee(req, res)
+};

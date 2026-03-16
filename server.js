@@ -97,25 +97,25 @@ app.get('/', (req, res) => {
 });
 
 // Employee routes
-app.get('/api/employees', employeeService.getAllEmployees);
-app.post('/api/employees', upload.single('image'), employeeService.createEmployee);
-app.put('/api/employees/:id', upload.single('image'), employeeService.updateEmployee);
-app.delete('/api/employees/:id', employeeService.deleteEmployee);
+app.get('/api/employees', (req, res) => employeeService.getAllEmployees(req, res));
+app.post('/api/employees', upload.single('image'), (req, res) => employeeService.createEmployee(req, res));
+app.put('/api/employees/:id', upload.single('image'), (req, res) => employeeService.updateEmployee(req, res));
+app.delete('/api/employees/:id', (req, res) => employeeService.deleteEmployee(req, res));
 
 // Face recognition routes
-app.post('/api/face/register', upload.single('image'), faceRecognitionService.registerEmployee);
-app.post('/api/face/verify', upload.single('image'), faceRecognitionService.verifyEmployee);
-app.get('/api/face/status', faceRecognitionService.getStatus);
+app.post('/api/face/register', upload.single('image'), (req, res) => faceRecognitionService.registerEmployee(req, res));
+app.post('/api/face/verify', upload.single('image'), (req, res) => faceRecognitionService.verifyEmployee(req, res));
+app.get('/api/face/status', (req, res) => faceRecognitionService.getStatus(req, res));
 
 // Attendance routes
-app.get('/api/attendance', attendanceService.getAttendance);
-app.post('/api/attendance/checkin', attendanceService.checkIn);
-app.post('/api/attendance/checkout', attendanceService.checkOut);
-app.get('/api/attendance/report', attendanceService.generateReport);
+app.get('/api/attendance', (req, res) => attendanceService.getAttendance(req, res));
+app.post('/api/attendance/checkin', (req, res) => attendanceService.checkIn(req, res));
+app.post('/api/attendance/checkout', (req, res) => attendanceService.checkOut(req, res));
+app.get('/api/attendance/report', (req, res) => attendanceService.generateReport(req, res));
 
 // System monitoring routes
-app.get('/api/system/status', systemMonitor.getSystemStatus);
-app.get('/api/system/health', systemMonitor.healthCheck);
+app.get('/api/system/status', (req, res) => systemMonitor.getSystemStatus(req, res));
+app.get('/api/system/health', (req, res) => systemMonitor.healthCheck(req, res));
 
 // Admin routes
 const adminRoutes = require('./routes/admin');

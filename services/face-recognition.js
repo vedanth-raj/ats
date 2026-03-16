@@ -37,20 +37,33 @@ class FaceRecognitionService {
     async checkPythonFaceRecognition() {
         return new Promise((resolve) => {
             const python = spawn(this.pythonPath, ['-c', 'import face_recognition; print("OK")']);
+            let hasOutput = false;
             
             python.stdout.on('data', (data) => {
-                if (data.toString().trim() === 'OK') {
+                const output = data.toString().trim();
+                if (output.includes('OK')) {
+                    hasOutput = true;
                     resolve(true);
                 }
             });
             
             python.stderr.on('data', (data) => {
-                console.error('Python face_recognition check error:', data.toString());
-                resolve(false);
+                const errorOutput = data.toString();
+                // Only treat as error if it's not just warnings
+                if (!errorOutput.includes('UserWarning') && !errorOutput.includes('pkg_resources is deprecated')) {
+                    console.error('Python face_recognition check error:', errorOutput);
+                } else {
+                    console.warn('Python face_recognition warning (non-critical):', errorOutput);
+                }
             });
             
             python.on('close', (code) => {
-                if (code !== 0) {
+                if (code === 0 && hasOutput) {
+                    resolve(true);
+                } else if (code === 0) {
+                    // Exit code 0 but no OK output - still try to resolve true for warnings
+                    resolve(true);
+                } else {
                     resolve(false);
                 }
             });
@@ -58,7 +71,9 @@ class FaceRecognitionService {
             // Timeout after 5 seconds
             setTimeout(() => {
                 python.kill();
-                resolve(false);
+                if (!hasOutput) {
+                    resolve(false);
+                }
             }, 5000);
         });
     }
@@ -275,4 +290,12 @@ class FaceRecognitionService {
     }
 }
 
-module.exports = new FaceRecognitionService();
+const faceRecognitionService = new FaceRecognitionService();
+
+module.exports = {
+    initialize: () => faceRecognitionService.initialize(),
+    registerEmployee: (req, res) => faceRecognitionService.registerEmployee(req, res),
+    verifyEmployee: (req, res) => faceRecognitionService.verifyEmployee(req, res),
+    getStatus: (req, res) => faceRecognitionService.getStatus(req, res),
+    processImage: (imageData) => faceRecognitionService.processImage(imageData)
+};

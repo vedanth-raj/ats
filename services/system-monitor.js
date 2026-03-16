@@ -213,4 +213,10 @@ class SystemMonitor {
     }
 }
 
-module.exports = new SystemMonitor();
+const systemMonitor = new SystemMonitor();
+
+module.exports = {
+    startMonitoring: () => systemMonitor.startMonitoring(),
+    getSystemStatus: (req, res) => systemMonitor.getSystemStatus(req, res),
+    healthCheck: (req, res) => systemMonitor.healthCheck(req, res)
+};

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - UAS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <h1>UAS API Test Page</h1>
+    <p><a href="/">← Back to Main</a></p>
+
+    <div class="test-section">
+        <h2>System Health</h2>
+        <button onclick="testHealth()">Test Health Check</button>
+        <div id="health-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Employee Management</h2>
+        <button onclick="testGetEmployees()">Get All Employees</button>
+        <button onclick="testAddEmployee()">Add Test Employee</button>
+        <div id="employee-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Attendance System</h2>
+        <button onclick="testGetAttendance()">Get Attendance Records</button>
+        <button onclick="testCheckIn()">Test Check-In</button>
+        <button onclick="testCheckOut()">Test Check-Out</button>
+        <div id="attendance-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>System Status</h2>
+        <button onclick="testSystemStatus()">Get System Status</button>
+        <div id="status-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testHealth() {
+            const result = document.getElementById('health-result');
+            try {
+                const response = await fetch('/api/system/health');
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+                result.className = 'result success';
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+                result.className = 'result error';
+            }
+        }
+
+        async function testGetEmployees() {
+            const result = document.getElementById('employee-result');
+            try {
+                const response = await fetch('/api/employees');
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+                result.className = 'result success';
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+                result.className = 'result error';
+            }
+        }
+
+        async function testAddEmployee() {
+            const result = document.getElementById('employee-result');
+            try {
+                const formData = new FormData();
+                formData.append('employeeId', 'TEST001');
+                formData.append('name', 'Test Employee');
+                formData.append('email', 'test@example.com');
+                formData.append('department', 'IT');
+
+                const response = await fetch('/api/employees', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+                result.className = response.ok ? 'result success' : 'result error';
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+                result.className = 'result error';
+            }
+        }
+
+        async function testGetAttendance() {
+            const result = document.getElementById('attendance-result');
+            try {
+                const response = await fetch('/api/attendance');
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+                result.className = 'result success';
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+                result.className = 'result error';
+            }
+        }
+
+        async function testCheckIn() {
+            const result = document.getElementById('attendance-result');
+            try {
+                const response = await fetch('/api/attendance/checkin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        employeeId: 'TEST001',
+                        employeeName: 'Test Employee'
+                    })
+                });
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+                result.className = response.ok ? 'result success' : 'result error';
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+                result.className = 'result error';
+            }
+        }
+
+        async function testCheckOut() {
+            const result = document.getElementById('attendance-result');
+            try {
+                const response = await fetch('/api/attendance/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        employeeId: 'TEST001',
+                        employeeName: 'Test Employee'
+                    })
+                });
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+                result.className = response.ok ? 'result success' : 'result error';
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+                result.className = 'result error';
+            }
+        }
+
+        async function testSystemStatus() {
+            const result = document.getElementById('status-result');
+            try {
+                const response = await fetch('/api/system/status');
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+                result.className = 'result success';
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+                result.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>

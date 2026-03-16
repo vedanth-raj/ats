@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Registration - UAS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #e1e5e9;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .file-input:hover {
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to Dashboard</a>
+        
+        <div class="header">
+            <div class="logo">UAS</div>
+            <h1>Employee Registration</h1>
+            <p class="subtitle">Register a new employee in the system</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <form id="registrationForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="employeeId">Employee ID *</label>
+                <input type="text" id="employeeId" name="employeeId" required>
+            </div>
+
+            <div class="form-group">
+                <label for="name">Full Name *</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email">
+            </div>
+
+            <div class="form-group">
+                <label for="department">Department</label>
+                <select id="department" name="department">
+                    <option value="">Select Department</option>
+                    <option value="IT">Information Technology</option>
+                    <option value="HR">Human Resources</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Operations">Operations</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="image">Profile Photos (Multiple photos improve accuracy)</label>
+                <div class="photo-capture-section">
+                    <!-- Camera Capture -->
+                    <div class="camera-section" id="cameraSection" style="display: none;">
+                        <video id="video" width="320" height="240" autoplay style="border-radius: 8px; margin-bottom: 10px;"></video>
+                        <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <button type="button" class="btn" onclick="capturePhoto()" id="captureBtn" style="width: auto; margin: 5px;">📷 Capture Photo</button>
+                            <button type="button" class="btn secondary" onclick="stopCamera()" style="width: auto; margin: 5px;">Stop Camera</button>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload -->
+                    <div class="file-input-wrapper">
+                        <input type="file" id="image" name="image" accept="image/*" multiple style="display: none;">
+                        <div class="file-input" onclick="document.getElementById('image').click();">
+                            <span id="file-text">Click to select image files (multiple photos recommended)</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Camera Button -->
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button type="button" class="btn secondary" onclick="startCamera()" id="startCameraBtn" style="width: auto;">📷 Use Camera</button>
+                    </div>
+                </div>
+                
+                <!-- Photo Preview Area -->
+                <div id="photoPreview" style="margin-top: 15px;">
+                    <!-- Captured/selected photos will appear here -->
+                </div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">Register Employee</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('registrationForm');
+        const messageDiv = document.getElementById('message');
+        const submitBtn = document.getElementById('submitBtn');
+        const imageInput = document.getElementById('image');
+        const fileText = document.getElementById('file-text');
+        const photoPreview = document.getElementById('photoPreview');
+        
+        let capturedPhotos = [];
+        let stream = null;
+
+        // Camera functionality
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                document.getElementById('cameraSection').style.display = 'block';
+                document.getElementById('startCameraBtn').style.display = 'none';
+            } catch (error) {
+                showMessage('Camera access denied or not available: ' + error.message, 'error');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            document.getElementById('cameraSection').style.display = 'none';
+            document.getElementById('startCameraBtn').style.display = 'inline-block';
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob(function(blob) {
+                const file = new File([blob], `captured_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                capturedPhotos.push(file);
+                updatePhotoPreview();
+                showMessage(`Photo ${capturedPhotos.length} captured successfully!`, 'success');
+            }, 'image/jpeg', 0.8);
+        }
+
+        // Handle file selection
+        imageInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            capturedPhotos = capturedPhotos.concat(files);
+            updatePhotoPreview();
+            updateFileText();
+        });
+
+        function updateFileText() {
+            const totalPhotos = capturedPhotos.length;
+            if (totalPhotos === 0) {
+                fileText.textContent = 'Click to select image files (multiple photos recommended)';
+            } else {
+                fileText.textContent = `${totalPhotos} photo(s) selected`;
+            }
+        }
+
+        function updatePhotoPreview() {
+            photoPreview.innerHTML = '';
+            
+            if (capturedPhotos.length === 0) {
+                return;
+            }
+
+            const previewContainer = document.createElement('div');
+            previewContainer.style.display = 'grid';
+            previewContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(100px, 1fr))';
+            previewContainer.style.gap = '10px';
+            previewContainer.style.marginTop = '10px';
+
+            capturedPhotos.forEach((file, index) => {
+                const photoDiv = document.createElement('div');
+                photoDiv.style.position = 'relative';
+                photoDiv.style.textAlign = 'center';
+
+                const img = document.createElement('img');
+                img.style.width = '100px';
+                img.style.height = '100px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                img.style.border = '2px solid #e1e5e9';
+
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = '×';
+                removeBtn.type = 'button';
+                removeBtn.style.position = 'absolute';
+                removeBtn.style.top = '-5px';
+                removeBtn.style.right = '-5px';
+                removeBtn.style.width = '20px';
+                removeBtn.style.height = '20px';
+                removeBtn.style.borderRadius = '50%';
+                removeBtn.style.background = '#dc3545';
+                removeBtn.style.color = 'white';
+                removeBtn.style.border = 'none';
+                removeBtn.style.cursor = 'pointer';
+                removeBtn.style.fontSize = '12px';
+                removeBtn.onclick = () => removePhoto(index);
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+
+                photoDiv.appendChild(img);
+                photoDiv.appendChild(removeBtn);
+                previewContainer.appendChild(photoDiv);
+            });
+
+            photoPreview.appendChild(previewContainer);
+            updateFileText();
+        }
+
+        function removePhoto(index) {
+            capturedPhotos.splice(index, 1);
+            updatePhotoPreview();
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const employeeId = document.getElementById('employeeId').value;
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const department = document.getElementById('department').value;
+            
+            if (!employeeId || !name) {
+                showMessage('Employee ID and name are required', 'error');
+                return;
+            }
+
+            if (capturedPhotos.length === 0) {
+                showMessage('Please capture or select at least one photo for face recognition', 'error');
+                return;
+            }
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registering...';
+            
+            try {
+                // First, create the employee record
+                const employeeFormData = new FormData();
+                employeeFormData.append('employeeId', employeeId);
+                employeeFormData.append('name', name);
+                employeeFormData.append('email', email);
+                employeeFormData.append('department', department);
+                
+                // Add the first photo to employee record
+                if (capturedPhotos.length > 0) {
+                    employeeFormData.append('image', capturedPhotos[0]);
+                }
+
+                const employeeResponse = await fetch('/api/employees', {
+                    method: 'POST',
+                    body: employeeFormData
+                });
+                
+                const employeeResult = await employeeResponse.json();
+                
+                if (!employeeResult.success) {
+                    showMessage(employeeResult.error || 'Employee registration failed', 'error');
+                    return;
+                }
+
+                // Now register all photos for face recognition
+                let successCount = 0;
+                let totalPhotos = capturedPhotos.length;
+
+                for (let i = 0; i < capturedPhotos.length; i++) {
+                    const faceFormData = new FormData();
+                    faceFormData.append('employeeId', employeeId);
+                    faceFormData.append('name', name);
+                    faceFormData.append('image', capturedPhotos[i]);
+
+                    try {
+                        const faceResponse = await fetch('/api/face/register', {
+                            method: 'POST',
+                            body: faceFormData
+                        });
+                        
+                        const faceResult = await faceResponse.json();
+                        
+                        if (faceResult.success) {
+                            successCount++;
+                        }
+                        
+                        // Update progress
+                        submitBtn.textContent = `Processing photo ${i + 1}/${totalPhotos}...`;
+                    } catch (error) {
+                        console.error('Face registration error for photo', i + 1, error);
+                    }
+                }
+
+                if (successCount > 0) {
+                    showMessage(`Employee registered successfully! ${successCount}/${totalPhotos} photos processed for face recognition.`, 'success');
+                    form.reset();
+                    capturedPhotos = [];
+                    updatePhotoPreview();
+                    stopCamera();
+                } else {
+                    showMessage('Employee registered but face recognition setup failed. Please try uploading photos again.', 'error');
+                }
+                
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Register Employee';
+            }
+        });
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Cleanup camera on page unload
+        window.addEventListener('beforeunload', function() {
+            stopCamera();
+        });
+    </script>
+</body>
+</html>

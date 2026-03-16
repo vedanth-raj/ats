@@ -273,4 +273,11 @@ class AttendanceService {
     }
 }
 
-module.exports = new AttendanceService();
+const attendanceService = new AttendanceService();
+
+module.exports = {
+    getAttendance: (req, res) => attendanceService.getAttendance(req, res),
+    checkIn: (req, res) => attendanceService.checkIn(req, res),
+    checkOut: (req, res) => attendanceService.checkOut(req, res),
+    generateReport: (req, res) => attendanceService.generateReport(req, res)
+};
