@@ -100,8 +100,8 @@ class FaceRecognitionEngine:
                 "error": f"Error processing image: {str(e)}"
             }
     
-    def verify_face(self, image_path, tolerance=0.6):
-        """Verify a face against all registered faces"""
+    def verify_face(self, image_path, tolerance=0.4):
+        """Verify a face against all registered faces (stricter threshold to prevent false matches)"""
         try:
             # Load image
             image = face_recognition.load_image_file(image_path)
@@ -155,8 +155,10 @@ class FaceRecognitionEngine:
                 }
             else:
                 return {
-                    "success": False,
-                    "error": "Face not recognized"
+                    "success": True,
+                    "employeeId": "unknown",
+                    "confidence": 0.0,
+                    "message": "Unknown person detected"
                 }
                 
         except Exception as e:
